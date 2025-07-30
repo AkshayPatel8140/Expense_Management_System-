@@ -15,4 +15,4 @@ export const baseApi = createApi({
   }),
   endpoints: () => ({}),
   tagTypes: ['Transaction', 'Budget', 'Goal', 'Category', 'User'],
-});
+}); 

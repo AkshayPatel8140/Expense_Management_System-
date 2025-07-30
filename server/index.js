@@ -21,8 +21,8 @@ const billRoutes = require('./routes/bills');
 const investmentRoutes = require('./routes/investments');
 
 // Import middleware
-const authMiddleware = require('./middleware/auth');
-const errorHandler = require('./middleware/errorHandler');
+const { authMiddleware } = require('./middleware/auth');
+const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
 const app = express();
