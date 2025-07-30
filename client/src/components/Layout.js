@@ -139,9 +139,16 @@ const Layout = ({ children, onLogout }) => {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
-            onClick={handleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
           >
-            <MenuItem>
+            <MenuItem onClick={() => { navigate('/profile'); handleMenuClose(); }}>
               <ListItemIcon>
                 <Person fontSize="small" />
               </ListItemIcon>
@@ -189,7 +196,6 @@ const Layout = ({ children, onLogout }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: 8,
         }}

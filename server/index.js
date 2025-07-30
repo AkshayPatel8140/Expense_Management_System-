@@ -77,17 +77,27 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Optional auth middleware for demo purposes
+const optionalAuth = (req, res, next) => {
+  // Try to authenticate, but don't fail if no token
+  if (req.headers.authorization) {
+    return authMiddleware(req, res, next);
+  }
+  // Continue without authentication for demo
+  next();
+};
+
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', authMiddleware, userRoutes);
-app.use('/api/transactions', authMiddleware, transactionRoutes);
-app.use('/api/budgets', authMiddleware, budgetRoutes);
-app.use('/api/goals', authMiddleware, goalRoutes);
-app.use('/api/categories', authMiddleware, categoryRoutes);
-app.use('/api/reports', authMiddleware, reportRoutes);
-app.use('/api/analytics', authMiddleware, analyticsRoutes);
-app.use('/api/bills', authMiddleware, billRoutes);
-app.use('/api/investments', authMiddleware, investmentRoutes);
+app.use('/api/users', optionalAuth, userRoutes);
+app.use('/api/transactions', optionalAuth, transactionRoutes);
+app.use('/api/budgets', optionalAuth, budgetRoutes);
+app.use('/api/goals', optionalAuth, goalRoutes);
+app.use('/api/categories', optionalAuth, categoryRoutes);
+app.use('/api/reports', optionalAuth, reportRoutes);
+app.use('/api/analytics', optionalAuth, analyticsRoutes);
+app.use('/api/bills', optionalAuth, billRoutes);
+app.use('/api/investments', optionalAuth, investmentRoutes);
 
 // Serve React app in production
 if (process.env.NODE_ENV === 'production') {

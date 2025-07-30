@@ -9,9 +9,11 @@ import {
   Link,
   Alert,
   CircularProgress,
+  Divider,
 } from '@mui/material';
 import { AccountBalance, Visibility, VisibilityOff } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
+import { authAPI } from '../services/api';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -34,15 +36,32 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      if (formData.email === 'demo@example.com' && formData.password === 'password') {
-        onLogin();
-      } else {
-        setError('Invalid email or password. Use demo@example.com / password');
-      }
+    try {
+      const response = await authAPI.login(formData);
+      onLogin(response.user, response.token);
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.message || 'Login failed. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Use demo login endpoint
+      const response = await authAPI.demoLogin();
+      onLogin(response.user, response.token);
+    } catch (error) {
+      console.error('Demo login error:', error);
+      // If demo login fails, show helpful message
+      setError('Demo login failed. You can register a new account or try logging in manually.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -121,6 +140,23 @@ const Login = ({ onLogin }) => {
             >
               {loading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
+            
+            <Divider sx={{ my: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                OR
+              </Typography>
+            </Divider>
+            
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleDemoLogin}
+              disabled={loading}
+              sx={{ mb: 2, py: 1.5 }}
+            >
+              Try Demo Account
+            </Button>
+            
             <Box sx={{ textAlign: 'center' }}>
               <Link component={RouterLink} to="/register" variant="body2">
                 {"Don't have an account? Sign Up"}

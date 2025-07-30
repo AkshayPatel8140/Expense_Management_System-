@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -25,6 +25,9 @@ import {
   MenuItem,
   Grid,
   Avatar,
+  Alert,
+  Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -34,6 +37,7 @@ import {
   FilterList,
   Receipt,
 } from '@mui/icons-material';
+import { transactionAPI } from '../services/api';
 
 // Mock data
 const mockTransactions = [
@@ -59,10 +63,12 @@ const categories = [
 ];
 
 const Transactions = () => {
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -70,6 +76,32 @@ const Transactions = () => {
     date: '',
     type: 'expense'
   });
+
+  // Load transactions on component mount
+  useEffect(() => {
+    loadTransactions();
+  }, []);
+
+  const loadTransactions = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading transactions...');
+      const data = await transactionAPI.getAll();
+      console.log('Transactions loaded:', data);
+      setTransactions(data);
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      // Don't fallback to mock data anymore since we have proper auth
+      setTransactions([]);
+      setSnackbar({
+        open: true,
+        message: 'Failed to load transactions. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenDialog = () => setOpenDialog(true);
   const handleCloseDialog = () => {
@@ -83,15 +115,33 @@ const Transactions = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newTransaction = {
-      id: Date.now(),
-      ...formData,
-      amount: parseFloat(formData.amount) * (formData.type === 'expense' ? -1 : 1)
-    };
-    setTransactions([newTransaction, ...transactions]);
-    handleCloseDialog();
+    try {
+      const transactionData = {
+        description: formData.description,
+        amount: parseFloat(formData.amount) * (formData.type === 'expense' ? -1 : 1),
+        category: formData.category,
+        date: formData.date,
+        type: formData.type
+      };
+
+      const newTransaction = await transactionAPI.create(transactionData);
+      setTransactions([newTransaction, ...transactions]);
+      handleCloseDialog();
+      setSnackbar({
+        open: true,
+        message: 'Transaction added successfully!',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to add transaction. Please try again.',
+        severity: 'error'
+      });
+    }
   };
 
   const handleChange = (e) => {
@@ -107,6 +157,9 @@ const Transactions = () => {
     return matchesSearch && matchesCategory;
   });
 
+  console.log('Current transactions:', transactions);
+  console.log('Filtered transactions:', filteredTransactions);
+
   const totalIncome = transactions
     .filter(t => t.amount > 0)
     .reduce((sum, t) => sum + t.amount, 0);
@@ -116,7 +169,7 @@ const Transactions = () => {
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   return (
-    <Box>
+    <Box sx={{ width: '100%', p: 3 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom>
@@ -171,7 +224,7 @@ const Transactions = () => {
         </Grid>
       </Grid>
 
-      {/* Filters and Actions */}
+            {/* Filters and Actions */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
@@ -208,6 +261,12 @@ const Transactions = () => {
                 variant="outlined"
                 startIcon={<FilterList />}
                 fullWidth
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  py: 1.5
+                }}
               >
                 More Filters
               </Button>
@@ -218,8 +277,14 @@ const Transactions = () => {
                 startIcon={<Add />}
                 fullWidth
                 onClick={handleOpenDialog}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  py: 1.5
+                }}
               >
-                Add
+                Add Transaction
               </Button>
             </Grid>
           </Grid>
@@ -229,54 +294,70 @@ const Transactions = () => {
       {/* Transactions Table */}
       <Card>
         <CardContent>
-          <TableContainer component={Paper} elevation={0}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: transaction.amount > 0 ? 'success.light' : 'error.light', mr: 2, width: 32, height: 32 }}>
-                          <Receipt fontSize="small" />
-                        </Avatar>
-                        {transaction.description}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={transaction.category} size="small" />
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        color={transaction.amount > 0 ? 'success.main' : 'error.main'}
-                        fontWeight="bold"
-                      >
-                        {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{transaction.date}</TableCell>
-                    <TableCell>
-                      <IconButton size="small">
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" color="error">
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <TableContainer component={Paper} elevation={0}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Description</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {filteredTransactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          No transactions found
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTransactions.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Avatar sx={{ bgcolor: transaction.amount > 0 ? 'success.light' : 'error.light', mr: 2, width: 32, height: 32 }}>
+                              <Receipt fontSize="small" />
+                            </Avatar>
+                            {transaction.description}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={transaction.category} size="small" />
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            color={transaction.amount > 0 ? 'success.main' : 'error.main'}
+                            fontWeight="bold"
+                          >
+                            {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{transaction.date}</TableCell>
+                        <TableCell>
+                          <IconButton size="small">
+                            <Edit />
+                          </IconButton>
+                          <IconButton size="small" color="error">
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -361,6 +442,22 @@ const Transactions = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

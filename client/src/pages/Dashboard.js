@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -54,6 +55,7 @@ const recentTransactions = [
 ];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const totalIncome = 2500;
   const totalExpenses = 1850;
   const netSavings = totalIncome - totalExpenses;
@@ -219,7 +221,7 @@ const Dashboard = () => {
                 <Typography variant="h6">
                   Recent Transactions
                 </Typography>
-                <Button startIcon={<Add />} size="small">
+                <Button startIcon={<Add />} size="small" onClick={() => navigate('/transactions')}>
                   Add Transaction
                 </Button>
               </Box>
@@ -272,6 +274,7 @@ const Dashboard = () => {
                     fullWidth
                     startIcon={<Add />}
                     sx={{ py: 2 }}
+                    onClick={() => navigate('/transactions')}
                   >
                     Add Transaction
                   </Button>
@@ -282,6 +285,7 @@ const Dashboard = () => {
                     fullWidth
                     startIcon={<AccountBalance />}
                     sx={{ py: 2 }}
+                    onClick={() => navigate('/budgets')}
                   >
                     Set Budget
                   </Button>
@@ -292,6 +296,7 @@ const Dashboard = () => {
                     fullWidth
                     startIcon={<Flag />}
                     sx={{ py: 2 }}
+                    onClick={() => navigate('/goals')}
                   >
                     Create Goal
                   </Button>
@@ -302,6 +307,7 @@ const Dashboard = () => {
                     fullWidth
                     startIcon={<Notifications />}
                     sx={{ py: 2 }}
+                    onClick={() => navigate('/analytics')}
                   >
                     View Reports
                   </Button>
