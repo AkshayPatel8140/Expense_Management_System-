@@ -1,0 +1,31 @@
+{
+  "name": "budgeting-expense-tracker",
+  "version": "1.0.0",
+  "description": "Comprehensive budgeting and expense tracking application with financial analysis and goal-setting capabilities",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "install-deps": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "keywords": [
+    "budgeting",
+    "expense-tracker",
+    "financial-planning",
+    "analytics"
+  ],
+  "author": "Financial App Developer",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@mui/x-date-pickers": "^8.9.0",
+    "date-fns": "^4.1.0",
+    "react-hot-toast": "^2.5.2",
+    "recharts": "^3.1.0"
+  }
+}
